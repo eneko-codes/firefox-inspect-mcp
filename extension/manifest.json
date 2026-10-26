@@ -15,6 +15,7 @@
     "url": "https://github.com/eneko-codes/firefox-inspect-mcp"
   },
   "license": "MIT",
+  "icon": "icon.png",
   "keywords": ["firefox", "browser", "devtools", "inspector", "webdriver"],
   "server": {
     "type": "binary",
