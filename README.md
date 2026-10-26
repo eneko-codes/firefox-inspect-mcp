@@ -67,6 +67,15 @@ The binary is `.build/release/firefox-inspect-mcp`. Point an MCP client at it:
 
 Optional: `--firefox-path /path/to/firefox` to use a different Firefox build.
 
+### As a Claude extension
+
+```bash
+./scripts/pack.sh
+```
+
+This builds an arm64-only release binary and packs `dist/firefox-inspect-mcp.mcpb`; open
+the file with Claude to install it. The extension's one setting is an optional Firefox path.
+
 ## Privacy and logging
 
 Logs go to stderr as fixed events only: start, browser start time, tool name, error kind
