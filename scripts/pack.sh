@@ -37,7 +37,7 @@ echo "==> Packing"
 mkdir -p "$ROOT/dist"
 OUT="$ROOT/dist/$NAME.mcpb"
 rm -f "$OUT"
-( cd "$STAGE" && zip -qrX "$OUT" manifest.json server )
+( cd "$STAGE" && zip -qrX "$OUT" manifest.json icon.png server )
 
 MODE=$(unzip -Z "$OUT" "server/$NAME" | awk 'NR==1 {print $1}')
 case "$MODE" in
