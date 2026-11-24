@@ -18,10 +18,6 @@ public enum Diagnostics {
         emit("info", "browser started ms=\(milliseconds(since: start))")
     }
 
-    public static func fatal(_ error: Error) {
-        emit("fatal", "exiting error=\(kind(of: error))")
-    }
-
     static func toolFailed(_ name: String, error: Error, since start: ContinuousClock.Instant) {
         emit(
             "error",

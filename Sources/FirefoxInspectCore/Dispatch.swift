@@ -1,11 +1,10 @@
 import Foundation
-import MCP
 
 /// Routes a `tools/call` to the inspector and renders the answer.
 ///
 /// Never starts a browser itself — everything goes through `BrowserInspector`, which is
 /// what lets the tests drive every branch below against a double with no Firefox.
-public struct InspectTools: Sendable {
+public struct InspectTools: ToolHandler {
     private let inspector: any BrowserInspector
     private let format = Format()
 
@@ -13,27 +12,24 @@ public struct InspectTools: Sendable {
         self.inspector = inspector
     }
 
-    public func handle(_ parameters: CallTool.Parameters) async -> CallTool.Result {
+    public func handle(_ parameters: ToolCall) async -> ToolOutput {
         let started = ContinuousClock.now
         do {
-            return .init(content: try await run(parameters), isError: false)
+            return ToolOutput(content: try await run(parameters), isError: false)
         } catch let error as InspectError {
             Diagnostics.toolFailed(parameters.name, error: error, since: started)
-            return .init(content: [.text(text: error.message, annotations: nil, _meta: nil)], isError: true)
+            return ToolOutput(text: error.message, isError: true)
         } catch {
             Diagnostics.toolFailed(parameters.name, error: error, since: started)
-            return .init(
-                content: [
-                    .text(text: InspectError.browserLost.message, annotations: nil, _meta: nil)
-                ], isError: true)
+            return ToolOutput(text: InspectError.browserLost.message, isError: true)
         }
     }
 
-    private func text(_ text: String) -> [Tool.Content] {
-        [.text(text: text, annotations: nil, _meta: nil)]
+    private func text(_ text: String) -> [ToolOutput.Block] {
+        [.text(text)]
     }
 
-    private func run(_ parameters: CallTool.Parameters) async throws -> [Tool.Content] {
+    private func run(_ parameters: ToolCall) async throws -> [ToolOutput.Block] {
         let arguments = Arguments(parameters.arguments)
 
         switch parameters.name {
@@ -81,7 +77,7 @@ public struct InspectTools: Sendable {
 
         case ToolCatalog.screenshotName:
             let png = try await inspector.screenshot()
-            return [.image(data: png, mimeType: "image/png", annotations: nil, _meta: nil)]
+            return [.image(data: png, mimeType: "image/png")]
 
         default:
             throw InspectError.badArgument(

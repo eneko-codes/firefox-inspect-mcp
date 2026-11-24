@@ -1,5 +1,4 @@
 import Foundation
-import MCP
 
 /// Turns BiDi events into the console and network history the tools report.
 ///
