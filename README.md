@@ -161,7 +161,7 @@ invented data and `example.com` hosts. It never starts Firefox.
 and `ToolStandardTests.swift` are copied unchanged into every one of the owner's MCP servers
 (the test files differ only in their `@testable import`). `ToolStandard.swift` holds the
 limits, the fixed wording of every notice and the guard every result passes through.
-`Deadline.swift` is a copy too, until it moves into the shared file. A change to one is made to every copy in the same piece of work; never
+`Deadline`, which abandons a call at its time limit, is part of `ToolStandard.swift`. A change to one is made to every copy in the same piece of work; never
 let a copy drift.
 
 ## Licence
