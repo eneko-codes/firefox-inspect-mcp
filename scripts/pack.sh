@@ -29,9 +29,12 @@ mkdir -p "$STAGE/server"
 cp "$BINARY" "$STAGE/server/$NAME"
 chmod +x "$STAGE/server/$NAME"
 
-# Ad-hoc signature with a fixed identifier. Nothing here is TCC-gated, so no real
-# identity is needed; this only replaces the linker's signature with a proper one.
-codesign --force --identifier "codes.eneko.$NAME" --sign - "$STAGE/server/$NAME"
+# A fixed identifier replaces the linker's signature with a proper one. Nothing here is
+# TCC-gated, so ad hoc is enough and is the default; MCPB_SIGN_IDENTITY signs with a real
+# identity instead, so that every server on the Mac can be signed the same way.
+IDENTITY="${MCPB_SIGN_IDENTITY:--}"
+echo "==> Signing with identity: $IDENTITY"
+codesign --force --identifier "codes.eneko.$NAME" --sign "$IDENTITY" "$STAGE/server/$NAME"
 
 echo "==> Packing"
 mkdir -p "$ROOT/dist"

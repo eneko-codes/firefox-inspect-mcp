@@ -72,8 +72,9 @@ logged. stdout is the JSON-RPC stream and nothing else writes to it.
 ./scripts/pack.sh
 ```
 
-That builds an arm64-only release binary, signs it ad hoc, checks the bundle, and writes
-`dist/firefox-inspect-mcp.mcpb`.
+That builds an arm64-only release binary, signs it, checks the bundle, and writes
+`dist/firefox-inspect-mcp.mcpb`. It signs ad hoc unless `MCPB_SIGN_IDENTITY` is set; see
+[Signing](#signing).
 
 ### 2. Install it
 
@@ -90,6 +91,16 @@ use `/Applications/Firefox.app`.
 Nothing this server does is behind a macOS privacy permission, so an ad-hoc signature is
 enough; it only replaces the linker's signature with a proper one. There is nothing to
 grant in System Settings.
+
+To sign it like the other servers on the Mac, pass a certificate's hash:
+
+```bash
+security find-identity -v -p codesigning   # copy the 40-character hash of an Apple Development or Developer ID Application identity
+MCPB_SIGN_IDENTITY="<identity hash>" ./scripts/pack.sh
+```
+
+Pass the hash, not the certificate's name: `pack.sh` prints the identity it signs with,
+and the name is yours. Never publish a bundle signed with a personal certificate.
 
 ## Tool switches
 
