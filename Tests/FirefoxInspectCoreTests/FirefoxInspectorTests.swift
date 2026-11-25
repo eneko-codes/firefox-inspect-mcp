@@ -90,10 +90,10 @@ struct FirefoxInspectorTests {
             "timestamp": .int(1), "source": .object(["context": .string("tab-1")]),
         ])))
         try await Task.sleep(for: .milliseconds(100))
-        #expect(try await inspector.consoleMessages(clear: false).map(\.text) == ["old"])
+        #expect(try await inspector.consoleMessages(clear: false).entries.map(\.text) == ["old"])
 
         _ = try await inspector.open(url: "https://example.com/next")
-        #expect(try await inspector.consoleMessages(clear: false).isEmpty)
+        #expect(try await inspector.consoleMessages(clear: false).entries.isEmpty)
     }
 
     @Test("shutdown ends the session and stops the browser exactly once")

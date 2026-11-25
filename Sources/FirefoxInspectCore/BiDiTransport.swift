@@ -55,9 +55,16 @@ actor WebSocketTransport: BiDiTransport {
     /// Commands that outlive this are abandoned: a hung page must not hang the server.
     static let commandTimeout: Duration = .seconds(30)
 
+    /// Above the longest page script result (`ToolCatalog.largestElement` characters, up
+    /// to three UTF-8 bytes each, plus the JSON around it) and the 5 MB response collector.
+    static let largestMessage = 64 * 1024 * 1024
+
     init(url: URL) {
         (events, eventSink) = AsyncStream.makeStream(of: BiDiEvent.self, bufferingPolicy: .unbounded)
         socket = URLSession.shared.webSocketTask(with: url)
+        // The default of 1 MiB would fail the whole connection on a large DOM or response
+        // body; the tools window what they return, so what crosses this socket may be larger.
+        socket.maximumMessageSize = Self.largestMessage
     }
 
     func start() {

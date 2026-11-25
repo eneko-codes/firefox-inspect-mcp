@@ -10,6 +10,10 @@ struct EventBuffer {
     static let networkCapacity = 1_000
 
     private(set) var console: [ConsoleEntry] = []
+    /// How many entries each list has dropped, oldest first, since it was last cleared.
+    /// A tool reports them so that a short history is never mistaken for a complete one.
+    private(set) var droppedConsole = 0
+    private(set) var droppedNetwork = 0
     private var requests: [String: NetworkEntry] = [:]
     private var order: [String] = []
     private var startTimestamps: [String: Double] = [:]
@@ -22,10 +26,13 @@ struct EventBuffer {
         requests = [:]
         order = []
         startTimestamps = [:]
+        droppedConsole = 0
+        droppedNetwork = 0
     }
 
     mutating func clearConsole() {
         console = []
+        droppedConsole = 0
     }
 
     /// `context` limits recording to the one tab this server drives.
@@ -65,6 +72,7 @@ struct EventBuffer {
         )
         console.append(entry)
         if console.count > Self.consoleCapacity {
+            droppedConsole += console.count - Self.consoleCapacity
             console.removeFirst(console.count - Self.consoleCapacity)
         }
     }
@@ -88,6 +96,7 @@ struct EventBuffer {
                 let dropped = order.removeFirst()
                 requests[dropped] = nil
                 startTimestamps[dropped] = nil
+                droppedNetwork += 1
             }
         }
         // A redirect reuses the id; the entry then describes the hop still in flight.

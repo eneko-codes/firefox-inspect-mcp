@@ -3,8 +3,9 @@ import Foundation
 public enum InspectMCPServer {
 
     public static let name = "firefox-inspect-mcp"
-    public static let version = "0.1.1"
+    public static let version = "0.2.0"
 
+    /// Quotes the constants the code enforces, so the text cannot drift from them.
     public static let instructions = """
         Inspects web pages through a Firefox this server starts itself.
 
@@ -12,6 +13,16 @@ public enum InspectMCPServer {
         empty temporary profile (no logins, no cookies, no history, no extensions) that is \
         deleted when the server stops. It cannot see the tabs the person has open, and \
         pages that need a login will show their logged-out state.
+
+        A result never holds everything. A notice in its first lines says what it leaves out \
+        and the exact argument that returns the rest: offset for the next page of \
+        console_messages, network_requests and page_storage (each tool's default and largest \
+        page are in its description), character_offset for the next window of page_elements \
+        and network_response_body (\(ToolCatalog.defaultMaxCharacters) characters by default, \
+        max_characters up to \(ToolCatalog.maxCharactersRange.upperBound)). A long field in a \
+        row is clipped and the rest cannot be read again. The console and network keep only the \
+        newest \(EventBuffer.consoleCapacity) and \(EventBuffer.networkCapacity) entries, and say when \
+        older ones were dropped. page_screenshot returns one image, scaled to fit.
 
         Workflow: open_url first. It starts the browser and loads the page; the other tools \
         then describe that page. Opening a new page clears the console and network history.

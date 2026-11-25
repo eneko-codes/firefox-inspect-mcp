@@ -69,14 +69,36 @@ public struct NetworkEntry: Sendable, Equatable {
 
 public struct ElementsResult: Sendable, Equatable {
     public var matchCount: Int
-    /// `outerHTML` of the first match, cut to the requested length.
+    /// `outerHTML` of the first match, whole: the tool windows it.
     public var html: String
-    public var isTruncated: Bool
 
-    public init(matchCount: Int, html: String, isTruncated: Bool) {
+    public init(matchCount: Int, html: String) {
         self.matchCount = matchCount
         self.html = html
-        self.isTruncated = isTruncated
+    }
+}
+
+/// The console messages still held, oldest first, and how many older ones were dropped
+/// when the history was full.
+public struct ConsoleHistory: Sendable, Equatable {
+    public var entries: [ConsoleEntry]
+    public var dropped: Int
+
+    public init(entries: [ConsoleEntry], dropped: Int = 0) {
+        self.entries = entries
+        self.dropped = dropped
+    }
+}
+
+/// The requests still held, in the order they started, and how many older ones were
+/// dropped when the history was full.
+public struct NetworkHistory: Sendable, Equatable {
+    public var entries: [NetworkEntry]
+    public var dropped: Int
+
+    public init(entries: [NetworkEntry], dropped: Int = 0) {
+        self.entries = entries
+        self.dropped = dropped
     }
 }
 
@@ -116,12 +138,10 @@ public struct ResponseBody: Sendable, Equatable {
     public var text: String
     /// True when the body was binary and `text` is its base64 form.
     public var isBase64: Bool
-    public var isTruncated: Bool
 
-    public init(text: String, isBase64: Bool, isTruncated: Bool) {
+    public init(text: String, isBase64: Bool) {
         self.text = text
         self.isBase64 = isBase64
-        self.isTruncated = isTruncated
     }
 }
 
@@ -147,10 +167,11 @@ public protocol BrowserInspector: Sendable {
     func status() async -> BrowserStatus
     /// Clears the console and network buffers, then loads the page.
     func open(url: String) async throws -> PageInfo
-    func elements(selector: String, characterLimit: Int) async throws -> ElementsResult
-    func consoleMessages(clear: Bool) async throws -> [ConsoleEntry]
-    func networkRequests() async throws -> [NetworkEntry]
-    func responseBody(requestID: String, characterLimit: Int) async throws -> ResponseBody
+    /// Refuses an element longer than `ToolCatalog.largestElement` characters.
+    func elements(selector: String) async throws -> ElementsResult
+    func consoleMessages(clear: Bool) async throws -> ConsoleHistory
+    func networkRequests() async throws -> NetworkHistory
+    func responseBody(requestID: String) async throws -> ResponseBody
     func storage() async throws -> StorageSnapshot
     /// PNG, base64-encoded.
     func screenshot() async throws -> String
