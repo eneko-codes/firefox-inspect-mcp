@@ -43,7 +43,9 @@ the page are fixed, and take the selector as an argument, never as code.
 |---|---|---|
 | WebDriver BiDi, over one WebSocket (`URLSessionWebSocketTask`) | Everything the tools read from the page | [WebDriver BiDi](https://w3c.github.io/webdriver-bidi/), [URLSessionWebSocketTask](https://developer.apple.com/documentation/foundation/urlsessionwebsockettask) |
 | `Foundation.Process` | Starting and stopping the headless Firefox | [Process](https://developer.apple.com/documentation/foundation/process) |
-| The [MCP Swift SDK](https://github.com/modelcontextprotocol/swift-sdk) | The stdio server and the tool protocol; the only dependency | — |
+| `MCPServer.swift` and `Value.swift`, over Foundation | The stdio server and the tool protocol (JSON-RPC over stdio) | [Model Context Protocol](https://modelcontextprotocol.io) |
+
+There is **no third-party dependency**: `Package.swift` lists none.
 
 ## The rules worth knowing before you use it
 
@@ -131,6 +133,11 @@ swift test
 
 The suite runs against fakes (a scripted BiDi transport and an in-memory inspector) with
 invented data and `example.com` hosts. It never starts Firefox.
+
+`MCPServer.swift`, `Value.swift` and `Tests/…/MCPProtocolTests.swift` are copied unchanged
+into every one of the owner's MCP servers (the test file differs only in its
+`@testable import`). A change to one is made to every copy in the same piece of work; never
+let a copy drift.
 
 ## Licence
 

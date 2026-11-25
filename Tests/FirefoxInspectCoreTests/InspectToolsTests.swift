@@ -1,5 +1,4 @@
 import Foundation
-import MCP
 import Testing
 
 @testable import FirefoxInspectCore
@@ -9,14 +8,10 @@ struct InspectToolsTests {
 
     private func call(
         _ name: String, _ arguments: [String: Value] = [:], on inspector: FakeInspector = FakeInspector()
-    ) async -> (text: String, isError: Bool, content: [Tool.Content]) {
+    ) async -> (text: String, isError: Bool, content: [ToolOutput.Block]) {
         let result = await InspectTools(inspector: inspector).handle(
             .init(name: name, arguments: arguments))
-        let text = result.content.compactMap { item -> String? in
-            if case .text(let text, _, _) = item { return text }
-            return nil
-        }.joined(separator: "\n")
-        return (text, result.isError ?? false, result.content)
+        return (result.text, result.isError, result.content)
     }
 
     @Test("Every advertised tool is routed, and nothing else is")
@@ -94,7 +89,7 @@ struct InspectToolsTests {
     @Test("A screenshot comes back as an image, not as text")
     func screenshotIsImage() async {
         let reply = await call("page_screenshot")
-        guard case .image(let data, let mimeType, _, _) = reply.content.first else {
+        guard case .image(let data, let mimeType) = reply.content.first else {
             Issue.record("expected image content")
             return
         }

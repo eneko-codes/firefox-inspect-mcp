@@ -1,5 +1,4 @@
 import Foundation
-import MCP
 
 /// A connected browser: the BiDi wire plus how to shut the process behind it down.
 struct BrowserConnection: Sendable {

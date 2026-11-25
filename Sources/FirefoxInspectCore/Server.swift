@@ -1,10 +1,9 @@
 import Foundation
-import MCP
 
 public enum InspectMCPServer {
 
     public static let name = "firefox-inspect-mcp"
-    public static let version = "0.1.0"
+    public static let version = "0.1.1"
 
     public static let instructions = """
         Inspects web pages through a Firefox this server starts itself.
@@ -28,22 +27,14 @@ public enum InspectMCPServer {
 
     /// The inspector is a parameter so the whole server can be driven by a double.
     /// Nothing in this function starts a browser by itself.
-    public static func run(inspector: any BrowserInspector) async throws {
-        let tools = InspectTools(inspector: inspector)
-        let server = Server(
-            name: name,
-            version: version,
-            instructions: instructions,
-            capabilities: .init(tools: .init(listChanged: false))
-        )
-
-        await server.withMethodHandler(ListTools.self) { _ in .init(tools: ToolCatalog.all()) }
-        await server.withMethodHandler(CallTool.self) { await tools.handle($0) }
-
-        // The default StdioTransport logger is a no-op handler. Leave it that way: a
-        // logger writing to stdout would interleave with the JSON-RPC stream.
+    public static func run(inspector: any BrowserInspector) async {
         Diagnostics.started(version: version)
-        try await server.start(transport: StdioTransport())
-        await server.waitUntilCompleted()
+        await serveStandardStreams(handler: handler(tools: InspectTools(inspector: inspector)))
+    }
+
+    public static func handler(tools: InspectTools) -> MCPHandler {
+        MCPHandler(
+            name: name, version: version, instructions: instructions,
+            catalog: ToolCatalog.all(), tools: tools)
     }
 }

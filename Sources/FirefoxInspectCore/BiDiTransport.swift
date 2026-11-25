@@ -1,5 +1,4 @@
 import Foundation
-import MCP
 
 /// One event pushed by Firefox, e.g. `log.entryAdded`.
 public struct BiDiEvent: Sendable {

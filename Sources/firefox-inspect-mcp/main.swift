@@ -22,12 +22,5 @@ for signalNumber in [SIGTERM, SIGINT] {
     signalSources.append(source)
 }
 
-do {
-    try await InspectMCPServer.run(inspector: inspector)
-    await inspector.shutdown()
-} catch {
-    // Exiting 0 here would be indistinguishable from a clean shutdown.
-    Diagnostics.fatal(error)
-    await inspector.shutdown()
-    exit(1)
-}
+await InspectMCPServer.run(inspector: inspector)
+await inspector.shutdown()
