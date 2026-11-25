@@ -136,7 +136,8 @@ public actor FirefoxInspector: BrowserInspector {
         switch error {
         case let error as InspectError: return error
         case let error as BiDiError: return InspectError.commandFailed(code: error.code)
-        case TransportError.timedOut: return InspectError.commandFailed(code: "timeout")
+        case TransportError.timedOut:
+            return InspectError.commandTimedOut(seconds: Int(WebSocketTransport.commandTimeout.components.seconds))
         default: return InspectError.browserLost
         }
     }
@@ -161,42 +162,45 @@ public actor FirefoxInspector: BrowserInspector {
         return try await pageInfo()
     }
 
-    public func elements(selector: String, characterLimit: Int) async throws -> ElementsResult {
+    public func elements(selector: String) async throws -> ElementsResult {
         let reply = try await script(
             """
-            (selector, limit) => {
+            (selector, ceiling) => {
               let nodes;
               try { nodes = document.querySelectorAll(selector); }
               catch (error) { return JSON.stringify({invalid: true}); }
               const html = nodes.length ? nodes[0].outerHTML : "";
-              return JSON.stringify({
-                count: nodes.length, html: html.slice(0, limit), truncated: html.length > limit
-              });
+              if (html.length > ceiling) {
+                return JSON.stringify({count: nodes.length, tooLarge: html.length});
+              }
+              return JSON.stringify({count: nodes.length, html: html});
             }
-            """, arguments: [.string(selector), .int(characterLimit)])
+            """, arguments: [.string(selector), .int(ToolCatalog.largestElement)])
 
         guard reply.objectValue?["invalid"]?.boolValue != true else {
             throw InspectError.badArgument(name: "selector", reason: "it is not a valid CSS selector")
         }
+        if let size = reply.objectValue?["tooLarge"]?.intValue {
+            throw InspectError.elementTooLarge(size: size)
+        }
         return ElementsResult(
             matchCount: reply.objectValue?["count"]?.intValue ?? 0,
-            html: reply.objectValue?["html"]?.stringValue ?? "",
-            isTruncated: reply.objectValue?["truncated"]?.boolValue ?? false)
+            html: reply.objectValue?["html"]?.stringValue ?? "")
     }
 
-    public func consoleMessages(clear: Bool) async throws -> [ConsoleEntry] {
+    public func consoleMessages(clear: Bool) async throws -> ConsoleHistory {
         _ = try await ready()
-        let entries = buffer.console
+        let history = ConsoleHistory(entries: buffer.console, dropped: buffer.droppedConsole)
         if clear { buffer.clearConsole() }
-        return entries
+        return history
     }
 
-    public func networkRequests() async throws -> [NetworkEntry] {
+    public func networkRequests() async throws -> NetworkHistory {
         _ = try await ready()
-        return buffer.network
+        return NetworkHistory(entries: buffer.network, dropped: buffer.droppedNetwork)
     }
 
-    public func responseBody(requestID: String, characterLimit: Int) async throws -> ResponseBody {
+    public func responseBody(requestID: String) async throws -> ResponseBody {
         let connection = try await ready()
         guard buffer.network.contains(where: { $0.id == requestID }) else {
             throw InspectError.requestNotFound(id: requestID)
@@ -216,9 +220,7 @@ public actor FirefoxInspector: BrowserInspector {
         let bytes = reply.objectValue?["bytes"]?.objectValue
         let isBase64 = bytes?["type"]?.stringValue == "base64"
         let text = bytes?["value"]?.stringValue ?? ""
-        return ResponseBody(
-            text: String(text.prefix(characterLimit)), isBase64: isBase64,
-            isTruncated: text.count > characterLimit)
+        return ResponseBody(text: text, isBase64: isBase64)
     }
 
     public func storage() async throws -> StorageSnapshot {

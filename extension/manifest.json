@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "firefox-inspect-mcp",
   "display_name": "Firefox Inspector",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Inspect a web page's DOM, console, network and storage through a separate, throwaway Firefox",
-  "long_description": "A local MCP server written in Swift that lets Claude look at a web page the way the browser's inspector does.\n\nIt starts its own headless Firefox with an empty temporary profile, deleted when the server stops. It is not your everyday browser: it cannot see your tabs, logins, cookies or history, and pages that need a login show their logged-out state.\n\nTools: open_url, page_elements, console_messages, network_requests, network_response_body, page_storage, page_screenshot, firefox_status. There is no tool that runs caller-supplied JavaScript. Sources, timelines, memory and breakpoints are not available.\n\nRequires Firefox at /Applications/Firefox.app, or set its path below. No telemetry; logs carry fixed events only.\n\nNot affiliated with or endorsed by Mozilla.",
+  "long_description": "A local MCP server written in Swift that lets Claude look at a web page the way the browser's inspector does.\n\nIt starts its own headless Firefox with an empty temporary profile, deleted when the server stops. It is not your everyday browser: it cannot see your tabs, logins, cookies or history, and pages that need a login show their logged-out state.\n\nTools: open_url, page_elements, console_messages, network_requests, network_response_body, page_storage, page_screenshot, firefox_status. There is no tool that runs caller-supplied JavaScript. Sources, timelines, memory and breakpoints are not available.\n\nNo result holds everything: a notice at the top of each says what it leaves out and the argument that returns the rest.\n\nRequires Firefox at /Applications/Firefox.app, or set its path below. No telemetry; logs carry fixed events only.\n\nNot affiliated with or endorsed by Mozilla.",
   "author": {
     "name": "eneko-codes",
     "url": "https://github.com/eneko-codes"
@@ -29,12 +29,12 @@
   "tools": [
     {"name": "firefox_status", "description": "Reports whether Firefox is installed where this server expects it and whether the browser it controls is running. Starts nothing."},
     {"name": "open_url", "description": "Loads an http or https page in the throwaway Firefox this server controls, starting it first if needed. Clears console and network history."},
-    {"name": "page_elements", "description": "Returns the HTML of the first element matching a CSS selector, as the browser holds it after scripts have run, plus the match count."},
-    {"name": "console_messages", "description": "Returns console output and uncaught JavaScript errors from the loaded page since the last open_url."},
-    {"name": "network_requests", "description": "Lists the requests the loaded page made: method, URL, status, type, size and duration; headers on request."},
-    {"name": "network_response_body", "description": "Returns the body of one request from network_requests. Binary bodies come back as base64."},
-    {"name": "page_storage", "description": "Returns cookies (HttpOnly included), localStorage and sessionStorage of the throwaway browser."},
-    {"name": "page_screenshot", "description": "Returns a PNG of the loaded page's viewport."}
+    {"name": "page_elements", "description": "Returns the HTML of the first element matching a CSS selector, as the browser holds it after scripts have run, plus the match count, in windows (character_offset, max_characters)."},
+    {"name": "console_messages", "description": "Returns console output and uncaught JavaScript errors from the loaded page since the last open_url, oldest first, one page at a time (limit, offset)."},
+    {"name": "network_requests", "description": "Lists the requests the loaded page made in the order they started: method, URL, status, type, size and duration; headers on request; one page at a time (limit, offset)."},
+    {"name": "network_response_body", "description": "Returns the body of one request from network_requests, in windows (character_offset, max_characters). Binary bodies come back as base64."},
+    {"name": "page_storage", "description": "Returns cookies (HttpOnly included), localStorage and sessionStorage of the throwaway browser, one page at a time (limit, offset)."},
+    {"name": "page_screenshot", "description": "Returns one image of the loaded page's viewport, scaled down to fit the image limits."}
   ],
   "user_config": {
     "firefox_path": {

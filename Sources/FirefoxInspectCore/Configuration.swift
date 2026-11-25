@@ -31,10 +31,4 @@ public struct Configuration: Sendable, Equatable {
         }
         return configuration
     }
-
-    /// Ceiling on how much of one page crosses the boundary, in characters.
-    public static let characterLimit = 40_000
-
-    public static let listLimitRange = 1...500
-    public static let defaultListLimit = 100
 }

@@ -27,12 +27,12 @@ Not affiliated with or endorsed by Mozilla.
 |---|---|---|
 | `firefox_status` | — | Whether Firefox is found and whether the browser it controls is running. Starts nothing. |
 | `open_url` | — | Loads an http/https page in the throwaway Firefox, starting it first if needed, and waits. Clears console and network history. |
-| `page_elements` | Elements | HTML of the first match for a CSS selector, after scripts ran. |
-| `console_messages` | Console | `console.*` calls and uncaught errors since the page started loading. |
-| `network_requests` | Network | Method, URL, status, type, size and duration; headers on request. |
-| `network_response_body` | Network | One response body (not redirects, cached responses, or over 5 MB). |
-| `page_storage` | Storage | Cookies (HttpOnly included), `localStorage` and `sessionStorage` of the throwaway browser. |
-| `page_screenshot` | — | PNG of the loaded page's viewport. |
+| `page_elements` | Elements | HTML of the first match for a CSS selector, after scripts ran, read in windows (`character_offset`, `max_characters`). |
+| `console_messages` | Console | `console.*` calls and uncaught errors since the page started loading, oldest first, paged (`limit`, `offset`). |
+| `network_requests` | Network | Method, URL, status, type, size and duration in the order requests started; headers on request; paged (`limit`, `offset`). |
+| `network_response_body` | Network | One response body in windows (`character_offset`, `max_characters`); not redirects, cached responses, or over 5 MB. |
+| `page_storage` | Storage | Cookies (HttpOnly included), `localStorage` and `sessionStorage` of the throwaway browser, paged (`limit`, `offset`). |
+| `page_screenshot` | — | One image of the loaded page's viewport, scaled down to the image limits when it is larger. |
 
 There is deliberately **no tool that runs caller-supplied JavaScript**. The scripts that read
 the page are fixed, and take the selector as an argument, never as code.
@@ -46,6 +46,18 @@ the page are fixed, and take the selector as an argument, never as code.
 | `MCPServer.swift` and `Value.swift`, over Foundation | The stdio server and the tool protocol (JSON-RPC over stdio) | [Model Context Protocol](https://modelcontextprotocol.io) |
 
 There is **no third-party dependency**: `Package.swift` lists none.
+
+## What a result holds
+
+No result holds everything. A notice in its first lines says what it leaves out and the
+exact argument that returns the rest (`offset`, or `character_offset` for a window on a long
+text), in the same words in every one of the owner's servers. Whatever a tool pages or
+windows, it states the order. A long field inside a row (a console message, a URL, a header
+or a stored value) is clipped, says so, and the rest cannot be read again. The console and
+network keep a bounded history and say when older entries were dropped. A call that does not
+finish in time is answered with an error saying so. The sizes are constants in
+`Sources/FirefoxInspectCore/ToolCatalog.swift`; the tool descriptions quote them, and
+`BoundsTests` holds every bound and notice to them.
 
 ## The rules worth knowing before you use it
 
@@ -145,9 +157,11 @@ swift test
 The suite runs against fakes (a scripted BiDi transport and an in-memory inspector) with
 invented data and `example.com` hosts. It never starts Firefox.
 
-`MCPServer.swift`, `Value.swift` and `Tests/…/MCPProtocolTests.swift` are copied unchanged
-into every one of the owner's MCP servers (the test file differs only in its
-`@testable import`). A change to one is made to every copy in the same piece of work; never
+`MCPServer.swift`, `Value.swift`, `ToolStandard.swift` and the tests `MCPProtocolTests.swift`
+and `ToolStandardTests.swift` are copied unchanged into every one of the owner's MCP servers
+(the test files differ only in their `@testable import`). `ToolStandard.swift` holds the
+limits, the fixed wording of every notice and the guard every result passes through.
+`Deadline.swift` is a copy too, until it moves into the shared file. A change to one is made to every copy in the same piece of work; never
 let a copy drift.
 
 ## Licence

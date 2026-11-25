@@ -48,7 +48,7 @@ struct InspectToolsTests {
         #expect(inspector.selectors == ["html"])
     }
 
-    @Test("console_messages filters by level and keeps the newest entries")
+    @Test("console_messages filters by level and lists the oldest entries first")
     func consoleFilter() async {
         let inspector = FakeInspector()
         let moment = Date(timeIntervalSince1970: 0)
@@ -56,8 +56,9 @@ struct InspectToolsTests {
             ConsoleEntry(level: $0 % 2 == 0 ? "error" : "info", source: "console", text: "m\($0)", timestamp: moment)
         }
         let reply = await call("console_messages", ["level": .string("error"), "limit": .int(1), "clear": .bool(true)], on: inspector)
-        #expect(reply.text.contains("m4"))
-        #expect(!reply.text.contains("m2"))
+        #expect(reply.text.contains("m2"))
+        #expect(!reply.text.contains("m4"))
+        #expect(reply.text.hasPrefix("Showing 1–1 of 2 console messages. The history was cleared, so the rest cannot be read again."))
         #expect(inspector.clearedConsole)
     }
 
@@ -88,12 +89,13 @@ struct InspectToolsTests {
 
     @Test("A screenshot comes back as an image, not as text")
     func screenshotIsImage() async {
-        let reply = await call("page_screenshot")
+        let inspector = FakeInspector()
+        let reply = await call("page_screenshot", on: inspector)
         guard case .image(let data, let mimeType) = reply.content.first else {
             Issue.record("expected image content")
             return
         }
-        #expect(data == "AAAA")
+        #expect(data == inspector.screenshotData)
         #expect(mimeType == "image/png")
     }
 

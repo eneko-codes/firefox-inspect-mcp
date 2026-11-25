@@ -95,6 +95,29 @@ struct EventBufferTests {
         #expect(buffer.console.first?.text == "m10")
     }
 
+    @Test("Entries dropped from a full history are counted, and clearing resets the count")
+    func droppedAreCounted() {
+        var buffer = EventBuffer()
+        let source = Value.object(["context": .string("tab")])
+        for index in 0..<(EventBuffer.consoleCapacity + 4) {
+            buffer.apply(BiDiEvent(method: "log.entryAdded", params: .object([
+                "type": .string("console"), "level": .string("info"), "text": .string("m\(index)"),
+                "timestamp": .int(index), "source": source,
+            ])), context: "tab")
+        }
+        for index in 0..<(EventBuffer.networkCapacity + 6) {
+            buffer.apply(started("r\(index)"), context: "tab")
+        }
+        #expect(buffer.droppedConsole == 4)
+        #expect(buffer.droppedNetwork == 6)
+        #expect(buffer.network.count == EventBuffer.networkCapacity)
+
+        buffer.clearConsole()
+        #expect(buffer.droppedConsole == 0 && buffer.droppedNetwork == 6)
+        buffer.clear()
+        #expect(buffer.droppedNetwork == 0)
+    }
+
     @Test("clear empties both histories")
     func clearing() {
         var buffer = EventBuffer()
